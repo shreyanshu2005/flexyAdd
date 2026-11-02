@@ -1,0 +1,569 @@
+{
+  "info": {
+    "_postman_id": "3f3f0e59-6d9a-4e22-b1df-2d8d9ac3e6f1",
+    "name": "Finance Dashboard API",
+    "description": "Postman collection for the Django REST backend of the Finance Dashboard Platform.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health & Root",
+      "item": [
+        {
+          "name": "Root - API Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": ["{{base_url}}"],
+              "path": [""]
+            },
+            "description": "API root endpoint that shows available endpoints, documentation links, and implementation guide."
+          }
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health/",
+              "host": ["{{base_url}}"],
+              "path": ["health", ""]
+            },
+            "description": "Health check endpoint to verify API is running and healthy."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Setup (First-time only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/setup/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "setup", ""]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\",\n  \"setup_token\": \"{{setup_token}}\"\n}"
+            },
+            "description": "Initial setup endpoint - creates first admin user. Only works if database is empty. Requires SETUP_TOKEN from environment."
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/login/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login", ""]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response && response.success && response.data) {",
+                  "  if (response.data.access) {",
+                  "    pm.environment.set('access_token', response.data.access);",
+                  "  }",
+                  "  if (response.data.refresh) {",
+                  "    pm.environment.set('refresh_token', response.data.refresh);",
+                  "  }",
+                  "  if (response.data.user && response.data.user.id) {",
+                  "    pm.environment.set('user_id', String(response.data.user.id));",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/refresh/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "refresh", ""]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response && response.access) {",
+                  "  pm.environment.set('access_token', response.access);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", ""]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"analyst@example.com\",\n  \"password\": \"StrongPass123\",\n  \"role\": \"ANALYST\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", ""]
+            }
+          }
+        },
+        {
+          "name": "Get User",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/{{user_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "{{user_id}}", ""]
+            }
+          }
+        },
+        {
+          "name": "Assign Role",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/{{user_id}}/role/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "{{user_id}}", "role", ""]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"VIEWER\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Activate or Deactivate User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/{{user_id}}/status/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "{{user_id}}", "status", ""]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_active\": false\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Records",
+      "item": [
+        {
+          "name": "Create Record",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/records/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "records", ""]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"1200.00\",\n  \"type\": \"income\",\n  \"category\": \"Salary\",\n  \"date\": \"2026-01-31\",\n  \"note\": \"January salary\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Records",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/records/?limit=10&offset=0",
+              "host": ["{{base_url}}"],
+              "path": ["api", "records", ""],
+              "query": [
+                { "key": "limit", "value": "10" },
+                { "key": "offset", "value": "0" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filter Records",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/records/?category=Salary&type=income&start_date=2026-01-01&end_date=2026-01-31&search=salary",
+              "host": ["{{base_url}}"],
+              "path": ["api", "records", ""],
+              "query": [
+                { "key": "category", "value": "Salary" },
+                { "key": "type", "value": "income" },
+                { "key": "start_date", "value": "2026-01-01" },
+                { "key": "end_date", "value": "2026-01-31" },
+                { "key": "search", "value": "salary" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Record",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/records/{{record_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "records", "{{record_id}}", ""]
+            }
+          }
+        },
+        {
+          "name": "Update Record",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/records/{{record_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "records", "{{record_id}}", ""]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"1500.00\",\n  \"type\": \"income\",\n  \"category\": \"Salary\",\n  \"date\": \"2026-01-31\",\n  \"note\": \"Updated salary\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Record",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/records/{{record_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "records", "{{record_id}}", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/summary/?start_date=2026-01-01&end_date=2026-01-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboard", "summary", ""],
+              "query": [
+                { "key": "start_date", "value": "2026-01-01" },
+                { "key": "end_date", "value": "2026-01-31" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Comparison",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/comparison/?start_date=2026-01-01&end_date=2026-01-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboard", "comparison", ""],
+              "query": [
+                { "key": "start_date", "value": "2026-01-01" },
+                { "key": "end_date", "value": "2026-01-31" }
+              ]
+            },
+            "description": "Period-over-period comparison endpoint."
+          }
+        },
+        {
+          "name": "Category Breakdown",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/categories/?start_date=2026-01-01&end_date=2026-01-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboard", "categories", ""],
+              "query": [
+                { "key": "start_date", "value": "2026-01-01" },
+                { "key": "end_date", "value": "2026-01-31" }
+              ]
+            },
+            "description": "Category-wise totals and record counts."
+          }
+        },
+        {
+          "name": "Top Spending Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/top-spending/?start_date=2026-01-01&end_date=2026-01-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboard", "top-spending", ""],
+              "query": [
+                { "key": "start_date", "value": "2026-01-01" },
+                { "key": "end_date", "value": "2026-01-31" }
+              ]
+            },
+            "description": "Top expense categories ranked by amount."
+          }
+        },
+        {
+          "name": "Monthly Trends",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/trends/?start_date=2026-01-01&end_date=2026-01-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboard", "trends", ""],
+              "query": [
+                { "key": "start_date", "value": "2026-01-01" },
+                { "key": "end_date", "value": "2026-01-31" }
+              ]
+            },
+            "description": "Monthly income and expense trend view."
+          }
+        },
+        {
+          "name": "Insights",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/insights/?start_date=2026-01-01&end_date=2026-01-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboard", "insights", ""],
+              "query": [
+                { "key": "start_date", "value": "2026-01-01" },
+                { "key": "end_date", "value": "2026-01-31" }
+              ]
+            },
+            "description": "Business insight flags from the dashboard engine."
+          }
+        },
+        {
+          "name": "Admin User Breakdown",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/users/?start_date=2026-01-01&end_date=2026-01-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboard", "users", ""],
+              "query": [
+                { "key": "start_date", "value": "2026-01-01" },
+                { "key": "end_date", "value": "2026-01-31" }
+              ]
+            },
+            "description": "Admin-only user-level contribution breakdown."
+          }
+        },
+        {
+          "name": "Summary - Current Month",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/summary/?start_date=2026-01-01&end_date=2026-01-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboard", "summary", ""],
+              "query": [
+                { "key": "start_date", "value": "2026-01-01" },
+                { "key": "end_date", "value": "2026-01-31" }
+              ]
+            },
+            "description": "Monthly analytics view with totals, comparison, top categories, and insights."
+          }
+        },
+        {
+          "name": "Summary - Comparison Window",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/summary/?start_date=2025-12-01&end_date=2026-01-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboard", "summary", ""],
+              "query": [
+                { "key": "start_date", "value": "2025-12-01" },
+                { "key": "end_date", "value": "2026-01-31" }
+              ]
+            },
+            "description": "Longer comparison window to see change across two periods."
+          }
+        },
+        {
+          "name": "Summary - No Filters",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/summary/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboard", "summary", ""]
+            },
+            "description": "Fetch all dashboard analytics without date filters."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Docs",
+      "item": [
+        {
+          "name": "OpenAPI Schema",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/schema/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "schema", ""]
+            }
+          }
+        },
+        {
+          "name": "Swagger UI",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/docs/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "docs", ""]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{access_token}}", "type": "string" }
+    ]
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://127.0.0.1:8000" },
+    { "key": "access_token", "value": "" },
+    { "key": "refresh_token", "value": "" },
+    { "key": "admin_email", "value": "admin@example.com" },
+    { "key": "admin_password", "value": "StrongPass123" },
+    { "key": "user_id", "value": "1" },
+    { "key": "record_id", "value": "1" }
+  ]
+}

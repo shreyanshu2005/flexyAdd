@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: zorvyn-api
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: cd backend && python manage.py migrate --noinput && gunicorn config.wsgi:application

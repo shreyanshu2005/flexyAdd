@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Finance Dashboard</title><link rel="icon" href="data:,">
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--text:#0f172a;--muted:#64748b;--line:#e6eaf3;--brand:#4f46e5;--in:#059669;--out:#e11d48;--shadow:0 1px 2px #0f172a0d,0 10px 30px #0f172a0b}
+[data-theme=dark]{color-scheme:dark;--bg:#0b1020;--card:#131a2e;--text:#e6eaf7;--muted:#8d99b8;--line:#232c47;--brand:#818cf8;--in:#34d399;--out:#fb7185;--shadow:none}
+*{box-sizing:border-box}body{margin:0;font:14px/1.45 Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select{font:inherit;color:inherit}button{padding:8px 14px;border:0;border-radius:10px;background:var(--brand);color:#fff;cursor:pointer;font-weight:500}
+button:disabled{opacity:.45;cursor:default}button.g{background:transparent;border:1px solid var(--line);color:var(--text)}button.r{background:var(--out)}
+input,select{padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--card);min-width:0}input:focus,select:focus{outline:2px solid var(--brand);outline-offset:-1px}
+.shell{display:flex;min-height:100vh}.side{width:232px;flex:none;position:sticky;top:0;height:100vh;background:var(--card);border-right:1px solid var(--line);padding:18px 12px;display:flex;flex-direction:column;gap:4px}
+.brand{font-size:18px;font-weight:700;padding:4px 10px 18px}.brand small{display:block;font-size:12px;font-weight:400;color:var(--muted);margin-top:2px}
+.side a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:var(--muted);cursor:pointer;font-weight:500}.side a i{font-style:normal;width:18px;text-align:center}
+.side a:hover{background:var(--bg)}.side a.on{background:color-mix(in srgb,var(--brand) 14%,transparent);color:var(--brand)}
+.content{flex:1;min-width:0}.top{position:sticky;top:0;z-index:5;display:flex;gap:10px;align-items:center;padding:12px 24px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.qa{flex:1;max-width:560px}.chip{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.muted{color:var(--muted)}
+main{max-width:1180px;margin:0 auto;padding:22px 24px 40px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:var(--shadow)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:16px}.grid .card{margin:0}.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px}.grid2 .card{margin-bottom:16px}
+.kpi small{color:var(--muted)}.kpi>div{font-size:26px;font-weight:700;letter-spacing:-.5px;margin:2px 0}.kpi small.in,.kpi small.out{font-size:12px}.in{color:var(--in)}.out{color:var(--out)}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.4px}tr:last-child td{border-bottom:0}
+.tbl{overflow-x:auto}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}h3{margin:0 0 12px;font-size:15px}a{color:var(--brand);cursor:pointer}
+.err{color:var(--out);margin:8px 0}.authwrap{min-height:100vh;display:grid;place-items:center;padding:16px}.login{width:100%;max-width:380px}.login input{width:100%;margin-bottom:10px}
+textarea{width:100%;min-height:90px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--card);font:inherit;color:inherit}code{background:var(--bg);padding:2px 6px;border-radius:6px;word-break:break-all}ol{padding-left:20px;margin:8px 0}li{margin-bottom:6px}
+dialog{border:1px solid var(--line);border-radius:16px;padding:22px;width:min(380px,92vw);background:var(--card);color:var(--text)}dialog::backdrop{background:#0008}dialog input,dialog select{width:100%;margin-bottom:10px}
+.track{height:10px;border-radius:6px;background:var(--line);margin-top:10px;overflow:hidden}.fill{height:100%;border-radius:6px;background:var(--in)}.fill.warn{background:#f59e0b}.fill.over{background:var(--out)}
+.warnbox{border-color:#f59e0b;background:color-mix(in srgb,#f59e0b 12%,var(--card))}
+@media(max-width:760px){.side{position:fixed;inset:auto 0 0 0;width:100%;height:auto;flex-direction:row;justify-content:space-around;padding:6px;z-index:10;border-right:0;border-top:1px solid var(--line)}
+.brand{display:none}.side a{flex-direction:column;gap:2px;padding:6px 10px;font-size:11px}.top{padding:10px 12px}.chip{display:none}main{padding:14px 12px 90px}.qa{max-width:none}}
+</style></head><body><div id="app"></div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+let S={access:null,refresh:null,user:null,tab:'dash',mode:'login',bm:'',err:'',off:0,rf:{},sd:'',ed:'',recs:{}};
+try{Object.assign(S,JSON.parse(sessionStorage.getItem('fd')||'{}'))}catch(e){}
+(()=>{let t;try{t=localStorage.getItem('fd-theme')}catch(e){}document.documentElement.dataset.theme=t||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light')})();
+function toggleTheme(){const t=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=t;try{localStorage.setItem('fd-theme',t)}catch(e){}}
+const mode=m=>{S.mode=m;S.err='';render()};
+const save=()=>{try{sessionStorage.setItem('fd',JSON.stringify({access:S.access,refresh:S.refresh,user:S.user}))}catch(e){}};
+
+async function api(path,{method='GET',body,auth=true,retry=true,blob=false}={}){
+  const h={'Content-Type':'application/json'};if(auth&&S.access)h.Authorization='Bearer '+S.access;
+  const r=await fetch(path,{method,headers:h,body:body?JSON.stringify(body):undefined});
+  if(r.status===401&&auth&&retry&&S.refresh){
+    try{const d=await api('/api/auth/refresh/',{method:'POST',body:{refresh:S.refresh},auth:false});S.access=d.access;save();return api(path,{method,body,auth,retry:false,blob})}
+    catch(e){logout();throw new Error('Session expired, please log in again')}}
+  if(blob&&r.ok)return r.blob();
+  let j={};try{j=await r.json()}catch(e){}
+  if(!r.ok||j.success===false){const e=j.error||{};let m=e.message||j.detail||'Request failed ('+r.status+')';
+    if(e.details&&typeof e.details==='object')m+=': '+Object.entries(e.details).map(([k,v])=>k+' '+[].concat(v).join(', ')).join('; ');throw new Error(m)}
+  return j.data!==undefined?j.data:j}
+
+function logout(){S.access=S.refresh=S.user=null;save();render()}
+async function login(){const email=$('#em').value,password=$('#pw').value;
+  try{if(S.mode==='setup')await api('/api/users/setup/',{method:'POST',auth:false,body:{email,password,setup_token:$('#tk').value}});
+    if(S.mode==='reg')await api('/api/users/register/',{method:'POST',auth:false,body:{email,password,workspace_name:$('#wn').value}});
+    const d=await api('/api/auth/login/',{method:'POST',auth:false,body:{email,password}});
+    S.access=d.access;S.refresh=d.refresh;S.user=d.user;S.err='';S.mode='login';S.tab='dash';save();render()}
+  catch(e){S.err=e.message;render()}}
+const errBox=e=>`<div class="card err">${esc(e.message)}</div>`;
+const go=t=>{S.tab=t;S.off=0;render()};
+
+const ICON={dash:'▦',rec:'☰',bud:'◎',upi:'⇄',usr:'☻'};
+const refreshTab=()=>({dash:vDash,rec:vRec,usr:vUsr,bud:vBud,upi:vUpi})[S.tab]();
+function render(){const a=$('#app'),m=S.mode;
+  if(!S.access){const T={login:['Welcome back','Log in'],reg:['Create your workspace','Create workspace'],setup:['First-time admin setup','Create admin & log in']}[m];
+    a.innerHTML=`<div class="authwrap"><div class="card login"><h3 style="font-size:20px">${T[0]}</h3>${m==='reg'?'<input id="wn" placeholder="Workspace or business name">':''}
+      <input id="em" type="email" placeholder="Email"><input id="pw" type="password" placeholder="Password (min 8 chars)" onkeydown="if(event.key==='Enter')login()">${m==='setup'?'<input id="tk" type="password" placeholder="Setup token">':''}
+      <button onclick="login()" style="width:100%">${T[1]}</button><div class="err">${esc(S.err)}</div>
+      <div class="muted">${m==='login'?'New here? <a onclick="mode(\'reg\')">Create a workspace</a> · <a onclick="mode(\'setup\')">Admin setup</a>':'<a onclick="mode(\'login\')">Back to login</a>'}</div></div></div>`;return}
+  const adm=S.user.role==='ADMIN',rd=adm||S.user.role==='ANALYST';
+  const tabs=[['dash','Dashboard'],...(rd?[['rec','Records']]:[]),['bud','Budgets'],...(adm?[['upi','UPI sync'],['usr','Team']]:[])];
+  a.innerHTML=`<div class="shell"><aside class="side"><div class="brand">◆ Finance<small>${esc(S.user.workspace||'')}</small></div>${tabs.map(t=>`<a class="${S.tab===t[0]?'on':''}" onclick="go('${t[0]}')"><i>${ICON[t[0]]}</i><span>${t[1]}</span></a>`).join('')}</aside>
+    <div class="content"><div class="top">${adm?'<input id="qa" class="qa" placeholder="Quick add — try: spent 450 on lunch yesterday" onkeydown="if(event.key===\'Enter\')quickAdd()">':'<div class="qa"></div>'}
+    <button class="g" onclick="toggleTheme()" title="Light / dark">◐</button><span class="chip">${esc(S.user.email)} · ${S.user.role}</span><button class="g" onclick="logout()">Logout</button></div><main id="main">Loading…</main></div></div><dialog id="dlg"></dialog>`;
+  refreshTab()}
+
+async function quickAdd(){const t=$('#qa').value.trim();if(!t)return;
+  try{const p=await api('/api/records/parse/',{method:'POST',body:{text:t}});S.recs[0]=p;editRec(0);$('#qa').value='';
+    $('#dlg h3').textContent='Confirm quick entry'+(p.source!=='none'?' · category: '+p.source:' · pick a category')}catch(e){alert(e.message)}}
+
+async function vBud(){const m=$('#main'),adm=S.user.role==='ADMIN';
+  try{const d=await api('/api/budgets/status/?month='+S.bm);
+    m.innerHTML=`<div class="card row"><b>Month</b><input type="month" value="${d.month}" onchange="S.bm=this.value;vBud()">
+      ${adm?'<input id="bc" placeholder="Category (e.g. Groceries)"><input id="bl" type="number" min="1" placeholder="Monthly limit"><button onclick="addBud()">Set budget</button>':''}<span class="err" id="be"></span></div>
+      ${d.budgets.length?d.budgets.map(b=>`<div class="card"><div class="row" style="justify-content:space-between"><b>${esc(b.category)}</b>
+        <span class="${b.state==='over'?'out':'muted'}">${fmt(b.spent)} / ${fmt(b.limit)} · ${b.percent}%</span>${adm?`<button class="g" onclick="delBud(${b.id})">Remove</button>`:''}</div>
+        <div class="track"><div class="fill ${b.state}" style="width:${Math.min(100,b.percent)}%"></div></div></div>`).join(''):'<div class="card muted">No budgets yet. Set a monthly limit for a category and you will get alerts at 80% and when it is exceeded.</div>'}`}
+  catch(e){m.innerHTML=errBox(e)}}
+async function addBud(){try{await api('/api/budgets/',{method:'POST',body:{category:$('#bc').value,monthly_limit:$('#bl').value}});vBud()}catch(e){$('#be').textContent=e.message}}
+async function delBud(id){if(confirm('Remove this budget?')){try{await api('/api/budgets/'+id+'/',{method:'DELETE'});vBud()}catch(e){alert(e.message)}}}
+
+const kpi=(l,v,c,raw,x)=>`<div class="card kpi"><small>${l}</small><div class="${c}">${raw?v:fmt(v)}</div>${x||''}</div>`;
+const badge=(ch,goodUp=true)=>{const p=ch&&ch.percentage;if(p==null)return'<small>no previous data</small>';const up=+p>=0;return`<small class="${up===goodUp?'in':'out'}">${up?'▲':'▼'} ${Math.abs(+p).toFixed(1)}% vs previous period</small>`};
+const friendsCard=f=>{if(!f||!f.friends.length)return'';const open=f.friends.filter(x=>+x.balance!==0),done=f.friends.length-open.length;
+  return`<div class="card tbl"><h3>Friends <small class="muted">— money lent and repaid is kept out of income &amp; expenses</small></h3>
+    <div class="row" style="margin-bottom:8px"><span>Owed to you: <b class="in">${fmt(f.total_owed_to_me)}</b></span>${+f.total_i_owe?`<span>You owe: <b class="out">${fmt(f.total_i_owe)}</b></span>`:''}</div>
+    ${open.length?`<table><tr><th>Friend</th><th>Lent</th><th>Repaid</th><th>Balance</th><th>Last</th></tr>${open.map(x=>`<tr><td>${esc(x.name)}</td><td>${fmt(x.lent)}</td><td>${fmt(x.repaid)}</td><td class="${+x.balance>0?'in':'out'}">${+x.balance>0?'owes you ':'you owe '}${fmt(Math.abs(x.balance))}</td><td>${x.last_date}</td></tr>`).join('')}</table>`:'<span class="muted">Everyone is settled up.</span>'}
+    ${done&&open.length?`<div class="muted" style="margin-top:8px">${done} settled</div>`:''}</div>`};
+const COL=['#2563eb','#f59e0b','#10b981','#ef4444','#8b5cf6'];
+function lineChart(t){if(!t.length)return'No data';const W=520,H=210,p=32,n=t.length,mx=Math.max(1,...t.flatMap(x=>[+x.income,+x.expense]));
+  const X=i=>p+(n===1?(W-2*p)/2:i*(W-2*p)/(n-1)),Y=v=>H-p-v/mx*(H-2*p),lb=x=>esc(String(x.month).slice(0,7));
+  const line=(k,c)=>`<polyline fill="none" stroke="${c}" stroke-width="2.5" points="${t.map((x,i)=>X(i)+','+Y(+x[k])).join(' ')}"/>`+t.map((x,i)=>`<circle cx="${X(i)}" cy="${Y(+x[k])}" r="4" fill="${c}"><title>${lb(x)} ${k}: ${fmt(x[k])}</title></circle>`).join('');
+  return`<svg viewBox="0 0 ${W} ${H}" style="width:100%"><line x1="${p}" y1="${H-p}" x2="${W-p}" y2="${H-p}" stroke="#d1d5db"/><text x="${p}" y="12" font-size="11" fill="#6b7280">max ${fmt(mx)}</text>${line('income','#059669')}${line('expense','#dc2626')}${t.map((x,i)=>n>8&&i%2?'':`<text x="${X(i)}" y="${H-10}" font-size="11" text-anchor="middle" fill="#6b7280">${lb(x)}</text>`).join('')}</svg>`}
+function donut(c){if(!c.length)return'No expenses yet';const tot=c.reduce((a,x)=>a+ +x.total_amount,0),R=60,C=2*Math.PI*R;let off=0;
+  const arcs=c.map((x,i)=>{const len=+x.total_amount/tot*C,e=`<circle r="${R}" cx="80" cy="80" fill="none" stroke="${COL[i%5]}" stroke-width="26" stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-off}" transform="rotate(-90 80 80)"><title>${esc(x.category)}: ${fmt(x.total_amount)}</title></circle>`;off+=len;return e}).join('');
+  return`<div class="row"><svg viewBox="0 0 160 160" width="160">${arcs}<text x="80" y="85" text-anchor="middle" font-size="13" font-weight="600" fill="currentColor">${fmt(tot)}</text></svg><div>${c.map((x,i)=>`<div><span style="color:${COL[i%5]}">■</span> ${esc(x.category)} — ${x.share_of_expenses==null?'':(+x.share_of_expenses).toFixed(1)+'%'}</div>`).join('')}</div></div>`}
+function setRange(){const a=$('#sd').value,b=$('#ed').value;if(a&&b&&a>b){$('#dd').innerHTML=errBox(new Error('End date must be on or after the start date.'));return}S.sd=a;S.ed=b;vDash()}
+async function vDash(){const m=$('#main');
+  m.innerHTML=`<div class="card row">From <input type="date" id="sd" value="${S.sd}"> to <input type="date" id="ed" value="${S.ed}">
+    <button onclick="setRange()">Apply</button><button class="g" onclick="S.sd=S.ed='';vDash()">Clear</button></div><div id="dd">Loading…</div>`;
+  try{const q=new URLSearchParams();if(S.sd)q.set('start_date',S.sd);if(S.ed)q.set('end_date',S.ed);
+    const d=await api('/api/dashboard/summary/?'+q),s=d.summary;
+    const ch=d.period_comparison.change;
+    $('#dd').innerHTML=`<div class="grid">${kpi('Total income',s.total_income,'in',0,badge(ch.total_income))}${kpi('Total expenses',s.total_expense,'out',0,badge(ch.total_expense,false))}${kpi('Net balance',s.net_balance,+s.net_balance<0?'out':'in',0,badge(ch.net_balance))}${kpi('Transactions',s.transaction_count,'',1)}</div>
+      ${friendsCard(d.friends)}<div class="card"><h3>Insights</h3>${d.insights.length?d.insights.map(i=>`<div>• ${esc(i.message)}</div>`).join(''):'No alerts for this period.'}</div>
+      <div class="grid2"><div class="card"><h3>Monthly trend <small class="in">● income</small> <small class="out">● expense</small></h3>${lineChart(d.monthly_trends)}</div>
+      <div class="card"><h3>Where the money goes (top expenses)</h3>${donut(d.top_spending_categories)}</div></div>
+      <div class="card tbl"><h3>Recent transactions</h3><table><tr><th>Date</th><th>Type</th><th>Category</th><th>Amount</th></tr>${d.recent_transactions.map(r=>
+        `<tr><td>${r.date}</td><td>${r.type}</td><td>${esc(r.category)}</td><td class="${r.type==='income'?'in':'out'}">${fmt(r.amount)}</td></tr>`).join('')}</table></div>
+      ${d.user_breakdown.length?`<div class="card tbl"><h3>Per-user breakdown</h3><table><tr><th>User</th><th>Income</th><th>Expense</th><th>Net</th><th>Count</th></tr>${d.user_breakdown.map(u=>
+        `<tr><td>${esc(u.user_email)}</td><td>${fmt(u.total_income)}</td><td>${fmt(u.total_expense)}</td><td>${fmt(u.net_balance)}</td><td>${u.transaction_count}</td></tr>`).join('')}</table></div>`:''}`;
+    api('/api/budgets/status/').then(b=>{if(b.alerts.length)$('#dd').insertAdjacentHTML('afterbegin',`<div class="card warnbox"><b>Budget alerts</b><br>${b.alerts.map(x=>'⚠ '+esc(x)).join('<br>')}</div>`)}).catch(()=>{})}
+  catch(e){$('#dd').innerHTML=errBox(e)}}
+
+async function vRec(){const m=$('#main'),f=S.rf,adm=S.user.role==='ADMIN',L=10;
+  const q=new URLSearchParams({limit:L,offset:S.off});['type','category','search','start_date','end_date'].forEach(k=>f[k]&&q.set(k,f[k]));
+  try{const d=await api('/api/records/?'+q);S.recs={};d.results.forEach(r=>S.recs[r.id]=r);
+    m.innerHTML=`<div class="card row"><select id="ft"><option value="">All types</option><option ${f.type==='income'?'selected':''}>income</option><option ${f.type==='expense'?'selected':''}>expense</option></select>
+      <input id="fc" placeholder="Category" value="${esc(f.category||'')}"><input id="fs" placeholder="Search" value="${esc(f.search||'')}">
+      <input type="date" id="fa" value="${f.start_date||''}"><input type="date" id="fb" value="${f.end_date||''}"><button onclick="filt()">Filter</button>${adm?'<button onclick="editRec()">+ Add record</button>':''}
+      <button class="g" onclick="exportCsv()">Export CSV</button>${adm?'<button class="g" title="Columns: date,type,category,amount,note" onclick="$(\'#imp\').click()">Import CSV</button><input id="imp" type="file" accept=".csv" hidden onchange="importCsv(this)">':''}</div>
+      <div class="card tbl"><table><tr><th>Date</th><th>Type</th><th>Category</th><th>Amount</th><th>Note</th><th>By</th>${adm?'<th></th>':''}</tr>${d.results.map(r=>
+        `<tr><td>${r.date}</td><td>${r.type}</td><td>${esc(r.category)}</td><td class="${r.type==='income'?'in':'out'}">${fmt(r.amount)}</td><td>${esc(r.note)}${kindTag(r)}</td><td>${esc(r.user_email)}</td>
+        ${adm?`<td>${r.kind==='normal'&&r.counterparty?`<button class="g" title="Track ${esc(r.counterparty)} as a friend: balances go to the Friends ledger and their future payments are sorted automatically" onclick="markFriend(${r.id})">Friend</button> `:''}<button class="g" onclick="editRec(${r.id})">Edit</button> <button class="r" onclick="delRec(${r.id})">Delete</button></td>`:''}</tr>`).join('')||'<tr><td colspan=7>No records</td></tr>'}</table>
+      <div class="row" style="margin-top:12px"><button class="g" ${S.off?'':'disabled'} onclick="S.off-=${L};vRec()">Prev</button>
+      <span>${d.count?S.off+1:0}–${Math.min(S.off+L,d.count)} of ${d.count}</span><button class="g" ${S.off+L<d.count?'':'disabled'} onclick="S.off+=${L};vRec()">Next</button></div></div>`}
+  catch(e){m.innerHTML=errBox(e)+'<button onclick="S.rf={};S.off=0;vRec()">Reset filters</button>'}}
+const kindTag=r=>r.kind==='lent'?`<br><small class="out">lent to ${esc(r.counterparty)}</small>`:r.kind==='repayment'?`<br><small class="in">repaid by ${esc(r.counterparty)}</small>`:r.counterparty?`<br><small class="muted">${esc(r.counterparty)}</small>`:'';
+async function markFriend(id){const r=S.recs[id];try{await api('/api/records/'+id+'/',{method:'PATCH',body:{kind:r.type==='expense'?'lent':'repayment',category:'Friends'}});vRec()}catch(e){alert(e.message)}}
+async function exportCsv(){try{const q=new URLSearchParams();Object.entries(S.rf).forEach(([k,v])=>v&&q.set(k,v));
+  const a=document.createElement('a');a.href=URL.createObjectURL(await api('/api/records/export/?'+q,{blob:true}));a.download='records.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}catch(e){alert(e.message)}}
+async function importCsv(el){const f=el.files[0];if(!f)return;try{const d=await api('/api/records/import/',{method:'POST',body:{csv:await f.text()}});alert('Imported '+d.imported+' records');S.off=0;vRec()}catch(e){alert('Import failed (nothing was saved):\n'+e.message.replace(/, Row /g,'\nRow '))}el.value=''}
+function filt(){S.rf={type:$('#ft').value,category:$('#fc').value,search:$('#fs').value,start_date:$('#fa').value,end_date:$('#fb').value};S.off=0;vRec()}
+function editRec(id){const r=S.recs[id]||{type:'expense',date:new Date().toISOString().slice(0,10)},d=$('#dlg');
+  d.innerHTML=`<h3>${id?'Edit':'Add'} record</h3><input id="ra" type="number" step="0.01" min="0.01" placeholder="Amount" value="${r.amount||''}">
+    <select id="rt"><option ${r.type==='income'?'selected':''}>income</option><option ${r.type==='expense'?'selected':''}>expense</option></select>
+    <input id="rc" placeholder="Category" value="${esc(r.category||'')}"><input id="rd" type="date" value="${r.date}"><input id="rn" placeholder="Note" value="${esc(r.note||'')}">
+    <select id="rk" onchange="if(this.value==='lent')$('#rt').value='expense';if(this.value==='repayment')$('#rt').value='income'">${[['normal','Normal'],['lent','Lent to a friend'],['repayment','Repayment from a friend']].map(k=>`<option value="${k[0]}" ${(r.kind||'normal')===k[0]?'selected':''}>${k[1]}</option>`).join('')}</select>
+    <input id="rw" placeholder="Friend or UPI id (needed for friend records)" value="${esc(r.counterparty||'')}">
+    <div class="err" id="re"></div><div class="row"><button onclick="saveRec(${id||0})">Save</button><button class="g" onclick="$('#dlg').close()">Cancel</button></div>`;d.showModal()}
+async function saveRec(id){try{await api(id?'/api/records/'+id+'/':'/api/records/',{method:id?'PATCH':'POST',
+  body:{amount:$('#ra').value,type:$('#rt').value,category:$('#rc').value,date:$('#rd').value,note:$('#rn').value,kind:$('#rk').value,counterparty:$('#rw').value}});$('#dlg').close();refreshTab()}catch(e){$('#re').textContent=e.message}}
+async function delRec(id){if(!confirm('Delete this record?'))return;try{await api('/api/records/'+id+'/',{method:'DELETE'});vRec()}catch(e){alert(e.message)}}
+
+async function vUpi(){const m=$('#main'),url=location.origin+'/api/records/ingest/sms/';
+  try{const k=await api('/api/records/ingest/key/');
+    m.innerHTML=`<div class="card"><h3>Auto-import UPI payments</h3>
+      <p class="muted">Your Android phone forwards each bank SMS to this app. Payments you make and money you receive are added as records automatically. OTPs, failed payments and non-UPI messages are ignored, and the SMS text itself is never stored.</p>
+      <div class="row"><button onclick="newKey(${k.configured})">${k.configured?'Replace key':'Create key'}</button>${k.configured?`<button class="r" onclick="delKey()">Revoke</button><span class="muted">key ${esc(k.prefix)}… · created ${String(k.created_at).slice(0,10)} · ${k.last_used_at?'last used '+String(k.last_used_at).replace('T',' ').slice(0,16)+' UTC':'never used yet'}</span>`:''}</div><div id="keybox"></div></div>
+      <div class="card"><h3>Phone setup (MacroDroid or Tasker)</h3>
+        <ol><li><b>MacroDroid:</b> new macro → trigger <i>SMS Received</i>, sender = your bank's SMS sender (for example contains <code>HDFCBK</code>). → action <i>HTTP Request</i>, method <b>POST</b>.<br><b>Tasker:</b> event <i>Received Text</i> → action <i>HTTP Request</i>, method <b>POST</b>.</li>
+        <li>URL: <code>${esc(url)}</code></li>
+        <li>Headers: <code>X-Ingest-Key: your key</code> and <code>Content-Type: text/plain</code></li>
+        <li>Body: the SMS text itself — <code>[sms_message]</code> in MacroDroid, <code>%SMSRB</code> in Tasker.</li>
+        <li>Allow the app to read SMS and turn off battery optimisation for it, otherwise Android may stop it in the background.</li></ol>
+        <p class="muted">Menu names can differ a little between app versions. This only works while your phone can reach this site, so use your deployed URL rather than localhost.</p></div>
+      <div class="card"><h3>Test an SMS</h3><p class="muted">Paste a real bank SMS to see how it would be read. Nothing is saved.</p>
+        <textarea id="tsms" placeholder="Paste a bank SMS here"></textarea><div class="row" style="margin-top:8px"><button onclick="testSms()">Check</button></div><div id="tres" style="margin-top:10px"></div></div>`}
+  catch(e){m.innerHTML=errBox(e)}}
+async function newKey(replacing){if(replacing&&!confirm('Replace the key? The old one stops working immediately, so update your phone.'))return;
+  try{const d=await api('/api/records/ingest/key/',{method:'POST'});
+    $('#keybox').innerHTML=`<div class="warnbox card" style="margin:12px 0 0"><b>Copy your key now — it is shown only once.</b><div class="row" style="margin-top:8px"><input id="kv" readonly style="flex:1" value="${esc(d.key)}"><button onclick="$('#kv').select();navigator.clipboard&&navigator.clipboard.writeText($('#kv').value)">Copy</button></div></div>`}
+  catch(e){alert(e.message)}}
+async function delKey(){if(!confirm('Revoke the key? Auto-import stops until you create a new one.'))return;try{await api('/api/records/ingest/key/',{method:'DELETE'});vUpi()}catch(e){alert(e.message)}}
+async function testSms(){const t=$('#tsms').value.trim();if(!t)return;
+  try{const d=await api('/api/records/ingest/preview/',{method:'POST',body:{message:t}});
+    $('#tres').innerHTML=d.understood?`<div class="card" style="margin:0"><b class="${d.type==='income'?'in':'out'}">${d.type==='income'?'Money in':'Money out'} · ${fmt(d.amount)}</b><br>${d.counterparty?(d.type==='income'?'From ':'To ')+esc(d.counterparty):'<span class="muted">Could not tell who the other person is</span>'} · ${esc(d.date)}<br><span class="muted">UPI ref: ${esc(d.upi_ref||'not found')}</span></div>`:`<div class="card warnbox" style="margin:0">Would be ignored: ${esc(d.reason)}</div>`}
+  catch(e){$('#tres').innerHTML=errBox(e)}}
+async function vUsr(){const m=$('#main');
+  try{const d=await api('/api/users/?limit=100'),us=d.results||d,me=S.user.id;
+    m.innerHTML=`<div class="card row"><input id="ue" type="email" placeholder="Email"><input id="up" type="password" placeholder="Password (min 8)">
+      <select id="ur"><option>VIEWER</option><option>ANALYST</option><option>ADMIN</option></select><button onclick="addUser()">Create user</button><span class="err" id="ue2"></span></div>
+      <div class="card tbl"><table><tr><th>Email</th><th>Role</th><th>Status</th><th>Created</th></tr>${us.map(u=>
+        `<tr><td>${esc(u.email)}</td><td><select onchange="patchU(${u.id},'role',{role:this.value})" ${u.id===me?'disabled':''}>${['VIEWER','ANALYST','ADMIN'].map(r=>`<option ${u.role===r?'selected':''}>${r}</option>`).join('')}</select></td>
+        <td><button class="${u.is_active?'g':'r'}" ${u.id===me?'disabled':''} onclick="patchU(${u.id},'status',{is_active:${!u.is_active}})">${u.is_active?'Active — deactivate':'Inactive — activate'}</button></td><td>${String(u.created_at).slice(0,10)}</td></tr>`).join('')}</table></div>`}
+  catch(e){m.innerHTML=errBox(e)}}
+async function addUser(){try{await api('/api/users/',{method:'POST',body:{email:$('#ue').value,password:$('#up').value,role:$('#ur').value}});vUsr()}catch(e){$('#ue2').textContent=e.message}}
+async function patchU(id,p,body){try{await api('/api/users/'+id+'/'+p+'/',{method:'PATCH',body});vUsr()}catch(e){alert(e.message);vUsr()}}
+render();
+</script></body></html>
